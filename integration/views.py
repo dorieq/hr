@@ -1,9 +1,18 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_yasg.utils import swagger_auto_schema
 from .models import Department, Location, Position, Employee
+from drf_yasg import openapi
 
 class DepartamentAPIView(APIView):
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('departaments', openapi.IN_QUERY, description="Массив департаментов", type=openapi.TYPE_ARRAY, items=openapi.Items(type="string")),
+        ],
+        responses={200: 'Array received successfully', 400: 'Bad Request'},
+    )
+
     def post(self, request, format=None):
         rec = request.data.get('departaments', [])
         for dep in rec:
@@ -12,6 +21,12 @@ class DepartamentAPIView(APIView):
         return Response({'message': 'Array received successfully'}, status=status.HTTP_200_OK)
 
 class LocationAPIView(APIView):
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('locations', openapi.IN_QUERY, description="Массив локации", type=openapi.TYPE_ARRAY, items=openapi.Items(type="string")),
+        ],
+        responses={200: 'Array received successfully', 400: 'Bad Request'},
+    )
     def post(self, request, format=None):
         rec = request.data.get('locations', [])
         for dep in rec:
@@ -21,6 +36,12 @@ class LocationAPIView(APIView):
     
     
 class PositionAPIView(APIView):
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('positions', openapi.IN_QUERY, description="Массив должностей", type=openapi.TYPE_ARRAY, items=openapi.Items(type="string")),
+        ],
+        responses={200: 'Array received successfully', 400: 'Bad Request'},
+    )
     def post(self, request, format=None):
         rec = request.data.get('positions', [])
         print(rec)
@@ -33,6 +54,12 @@ class PositionAPIView(APIView):
     
 
 class EmployeeAPIView(APIView):
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('employees', openapi.IN_QUERY, description="Массив работников", type=openapi.TYPE_ARRAY, items=openapi.Items(type="string")),
+        ],
+        responses={200: 'Array received successfully', 400: 'Bad Request'},
+    )
     def post(self, request, format=None):
         rec = request.data.get('employees', [])
         for dep in rec:
