@@ -3,9 +3,11 @@ from rest_framework.routers import DefaultRouter
 
 from . import views
 from .views import DepartamentAPIView, LocationAPIView, EmployeeAPIView, PositionAPIView, ExamListView, ExamDetailView, \
-    QuestionCreateView, AnswerCreateView, AddMembersView
+    QuestionCreateView, AnswerCreateView, AddMembersView, ApprovalRequestList, ApprovalRequestDetail
 
 urlpatterns = [
+    path('approval-requests/', ApprovalRequestList.as_view(), name='approval-request-list'),
+    path('approval-requests/<int:pk>/', ApprovalRequestDetail.as_view(), name='approval-request-detail'),
     path('exams/', ExamListView.as_view(), name='exam-list'),
     path('exams/<int:pk>/', ExamDetailView.as_view(), name='exam-detail'),
     path('questions/create/', QuestionCreateView.as_view(), name='create-question'),

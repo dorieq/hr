@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Exam, Question, Answers, Department, Employee, Policy, Application, Location
+from .models import Exam, Question, Answers, Department, Employee, Policy, Application, Location, ApprovalRequest
+
 
 class ExamSerializer(serializers.ModelSerializer):
     title = serializers.CharField(max_length=255)
@@ -90,4 +91,8 @@ class LocationSerializer(serializers.ModelSerializer):
         model = Location
         fields = ['name']
 
+class ApprovalRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ApprovalRequest
+        fields = '__all__'
          

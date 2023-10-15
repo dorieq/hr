@@ -3,6 +3,8 @@ from drf_yasg import openapi
 from django.contrib.auth.models import User
 from rest_framework import generics
 from django import forms
+from .models import ApprovalRequest
+from .serializers import ApprovalRequestSerializer
 from .serializers import ExamSerializer, AnswersSerializer, QuestionSerializer, DepartmentSerializer, \
     EmployeeSerializer, PolicySerializer, ApplicationSerializer, LocationSerializer
 from .models import Policy, ExpertCommission
@@ -207,7 +209,7 @@ class ExpertCommissionForm(forms.ModelForm):
         fields = ['name', 'members']
 
 
-class AddMembersView(FormView,APIView):
+class AddMembersView(FormView, APIView):
     template_name = 'add_members.html'
     form_class = AddMembersForm
 
@@ -222,3 +224,46 @@ class AddMembersView(FormView,APIView):
         members = form.cleaned_data['members']
         commission.members.add(*members)
         return super().form_valid(form)
+class ApprovalRequestList(APIView):
+    def get(self, request):
+        approval_requests = ApprovalRequest.objects.all()
+        serializer = ApprovalRequestSerializer(approval_requests, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = ApprovalRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ApprovalRequestDetail(APIView):
+    def get(self, request, pk):
+        try:
+            approval_request = ApprovalRequest.objects.get(pk=pk)
+        except ApprovalRequest.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ApprovalRequestSerializer(approval_request)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        try:
+            approval_request = ApprovalRequest.objects.get(pk=pk)
+        except ApprovalRequest.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ApprovalRequestSerializer(approval_request, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        try:
+            approval_request = ApprovalRequest.objects.get(pk=pk)
+        except ApprovalRequest.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        approval_request.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

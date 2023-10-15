@@ -152,3 +152,16 @@ class Answers(models.Model):
     class Meta:
         verbose_name = 'Ответ'
         verbose_name_plural = 'Ответы'
+class ApprovalRequest(models.Model):
+    status_choices = (
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+        ('Pending', 'Pending'),
+    )
+
+    id = models.AutoField(primary_key=True)
+    status = models.CharField(max_length=10, choices=status_choices)
+    user_id = models.IntegerField()
+
+    def __str__(self):
+        return f"ApprovalRequest {self.id}"
