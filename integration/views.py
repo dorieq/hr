@@ -283,7 +283,7 @@ class AllUserApprovalRequest(APIView):
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter('id', openapi.IN_QUERY, description="ID",
-                              type=openapi.TYPE_ARRAY, items=openapi.Items(type="integer")),
+                              type=openapi.TYPE_INTEGER),
             openapi.Parameter('status', openapi.IN_QUERY, description="Status",
                               type=openapi.TYPE_STRING, enum=list(status_choices)),
             openapi.Parameter('iin', openapi.IN_QUERY, description="Employee's ID",
@@ -317,7 +317,7 @@ class ApprovalRequestDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter('id', openapi.IN_QUERY, description="ID",
-                              type=openapi.TYPE_ARRAY, items=openapi.Items(type="integer")),
+                              type=openapi.TYPE_INTEGER),
             openapi.Parameter('status', openapi.IN_QUERY, description="Status",
                               type=openapi.TYPE_STRING, enum=list(status_choices)),
             openapi.Parameter('iin', openapi.IN_QUERY, description="Employee's ID",

@@ -160,8 +160,8 @@ class ApprovalRequest(models.Model):
     )
 
     id = models.AutoField(primary_key=True)
-    status = models.CharField(max_length=10, choices=status_choices)
-    iin = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True)
+    status = models.CharField(max_length=10, null=True, blank=True, choices=status_choices)
+    iin = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return f"ApprovalRequest {self.id}"
