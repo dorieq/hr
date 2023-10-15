@@ -224,7 +224,7 @@ class AddMembersView(FormView, APIView):
         members = form.cleaned_data['members']
         commission.members.add(*members)
         return super().form_valid(form)
-class ApprovalRequestList(APIView):
+class AllUserApprovalRequest(APIView):
     def get(self, request):
         approval_requests = ApprovalRequest.objects.all()
         serializer = ApprovalRequestSerializer(approval_requests, many=True)
@@ -267,3 +267,4 @@ class ApprovalRequestDetail(APIView):
 
         approval_request.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+

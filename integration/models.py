@@ -161,7 +161,7 @@ class ApprovalRequest(models.Model):
 
     id = models.AutoField(primary_key=True)
     status = models.CharField(max_length=10, choices=status_choices)
-    user_id = models.IntegerField()
+    iin = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
         return f"ApprovalRequest {self.id}"
