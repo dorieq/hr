@@ -8,7 +8,6 @@ class Policy(models.Model):
         verbose_name = 'Политика'
         verbose_name_plural = 'Политика'
 
-
 class ApplicationStatus(models.Model):
 
     status = models.CharField(
@@ -19,8 +18,39 @@ class ApplicationStatus(models.Model):
         verbose_name = 'Статус Заявки'
         verbose_name_plural = 'Статус Заявок'
 
-    def __str__(self): 
+    def __str__(self):
         return self.status
+class Application(models.Model):
+    current_location = models.CharField(max_length=255, default='Default Location')
+    # поля!!!!!.
+    status = models.ForeignKey(ApplicationStatus, on_delete=models.PROTECT)
+
+    def __str__(self):
+        return self.name
+    class Meta:
+        verbose_name = 'Заявка'
+        verbose_name_plural = 'Заявки'
+
+class ApplicationTemplate(models.Model):
+    STATUS_CHOICES = [
+        ('ACTIVE', 'Active'),
+        ('ARCHIVED', 'Archived'),
+    ]
+    name = models.CharField(max_length=255)
+    template = models.TextField()
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='ACTIVE',
+    )
+
+    class Meta:
+        verbose_name = 'Шаблон Заявки'
+        verbose_name_plural = 'Шаблон Заявок'
+
+    def __str__(self):
+        return self.name
+
     
 class Location(models.Model):
     
@@ -71,7 +101,16 @@ class Position(models.Model):
     class Meta:
         verbose_name = 'Позиция'
         verbose_name_plural = 'Позиции'
+class StatisticData(models.Model):
+    label = models.CharField(max_length=255, verbose_name='Метка')
+    value = models.IntegerField(verbose_name='Значение')
 
+    class Meta:
+        verbose_name = 'Данные статистики'
+        verbose_name_plural = 'Данные статистики'
+
+    def __str__(self):
+        return self.label
 class Employee(models.Model):
     name = models.CharField(max_length=255)
     iin = models.CharField(max_length=12)
@@ -82,3 +121,34 @@ class Employee(models.Model):
     class Meta:
         verbose_name = 'Работник'
         verbose_name_plural = 'Работники'
+
+class Exam(models.Model):
+    title = models.TextField()
+    instruction = models.TextField()
+    duration = models.IntegerField()
+    access = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = 'Экзамен'
+        verbose_name_plural = 'Экзамены'
+    def __str__(self):
+        return self.title
+
+
+class Question(models.Model):
+    examId = models.ForeignKey(Exam, on_delete=models.CASCADE)
+    question = models.TextField()
+    answerPosition: models.IntegerField
+    class Meta:
+        verbose_name = 'Вопрос'
+        verbose_name_plural = 'Вопросы'
+
+class Answers(models.Model):
+    questionId = models.ForeignKey(Question, on_delete=models.CASCADE)
+    questionPosition = models.IntegerField()
+    option: models.TextField()
+
+
+    class Meta:
+        verbose_name = 'Ответ'
+        verbose_name_plural = 'Ответы'
