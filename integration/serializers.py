@@ -92,13 +92,9 @@ class LocationSerializer(serializers.ModelSerializer):
         model = Location
         fields = ['name']
 class ApprovalRequestSerializer(serializers.ModelSerializer):
-    iin = serializers.PrimaryKeyRelatedField(queryset=Employee.objects.all())
     class Meta:
         model = ApprovalRequest
-        fields = '__all__'
-        extra_kwargs = {
-            'iin': {'required': False}
-        }
+        fields = ['id','iin','status']
 
 
 class ResumeSerializer(serializers.ModelSerializer):
