@@ -287,7 +287,7 @@ class AllUserApprovalRequest(APIView):
             openapi.Parameter('status', openapi.IN_QUERY, description="Status",
                               type=openapi.TYPE_STRING, enum=list(status_choices)),
             openapi.Parameter('iin', openapi.IN_QUERY, description="Employee's ID",
-                              type=openapi.TYPE_INTEGER),
+                              type=openapi.TYPE_STRING),
         ],
         responses={200: 'Data received successfully', 400: 'Bad Request'},
     )
