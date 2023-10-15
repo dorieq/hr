@@ -112,12 +112,13 @@ class StatisticData(models.Model):
     def __str__(self):
         return self.label
 class Employee(models.Model):
-    name = models.CharField(max_length=255)
-    iin = models.CharField(max_length=12)
-    Position = models.ForeignKey(Position, on_delete=models.SET_NULL, null=True)
+    name = models.CharField(max_length=255, blank=True)  # Allow an empty name
+    iin = models.CharField(max_length=12, blank=True)  # Allow an empty iin
+    Position = models.ForeignKey('Position', on_delete=models.SET_NULL, null=True, blank=True)  # Allow an empty Position
 
     def __str__(self):
         return self.name
+
     class Meta:
         verbose_name = 'Работник'
         verbose_name_plural = 'Работники'
@@ -167,7 +168,7 @@ class ApprovalRequest(models.Model):
         return f"ApprovalRequest {self.id}"
 
 class Resume(models.Model):
-    iin = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='resumes_as_iin')
+    iin = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='resumes_as_iin', blank=True)
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
     name = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='resumes_as_name')
     pdf_file = models.FileField(upload_to='resumes/')
