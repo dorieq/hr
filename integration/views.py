@@ -1,10 +1,13 @@
+from io import BytesIO
+
+from django.contrib.sites import requests
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.contrib.auth.models import User
 from rest_framework import generics
 from django import forms
-from .models import ApprovalRequest
-from .serializers import ApprovalRequestSerializer
+from .models import ApprovalRequest, Resume
+from .serializers import ApprovalRequestSerializer, ResumeSerializer
 from .serializers import ExamSerializer, AnswersSerializer, QuestionSerializer, DepartmentSerializer, \
     EmployeeSerializer, PolicySerializer, ApplicationSerializer, LocationSerializer
 from .models import Policy, ExpertCommission
@@ -192,10 +195,49 @@ class AddApplicationView(APIView):
         return Response(serializer.data)
 
 class PolicyView(APIView):
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('file', openapi.IN_QUERY, description="Policy File",
+                              type=openapi.TYPE_STRING),
+        ],
+        responses={200: 'Policy data received successfully', 400: 'Bad Request'},
+    )
     def get(self, request):
         policy = Policy.objects.first()
         serializer = PolicySerializer(policy)
         return Response(serializer.data)
+
+
+    def post(self, request):
+        pdf_url = request.data.get("file")  # Предположим, что ссылка на PDF находится в поле "pdf_url" запроса
+
+        if not pdf_url:
+            return Response({"isSuccessful": False, "message": "PDF URL is missing"})
+
+        # Загружаем PDF файл по ссылке
+        response = requests.get(pdf_url)
+
+        if response.status_code == 200:
+            # Создаем InMemoryUploadedFile из байтового содержимого PDF
+            pdf_file = BytesIO(response.content)
+            pdf_file.name = "policy.pdf"  # Задайте имя файла, как вам нужно
+
+            data = request.data.copy()
+            data["file"] = pdf_file  # Замените "pdf_field_name" на имя поля в вашей сериализаторе
+
+            serializer = PolicySerializer(data=data)
+
+            if serializer.is_valid():
+                policy = serializer.save()
+                return Response({"isSuccessful": True, "message": "Policy saved successfully",
+                                 "answer": AnswersSerializer(policy).data})
+            else:
+                return Response({"isSuccessful": False, "message": "Action Failed. Policy could not be saved",
+                                 "errors": serializer.errors})
+        else:
+            return Response({"isSuccessful": False, "message": "Failed to download PDF from the provided URL"})
+
 
 
 class ExpertCommissionForm(forms.ModelForm):
@@ -225,11 +267,30 @@ class AddMembersView(FormView, APIView):
         commission.members.add(*members)
         return super().form_valid(form)
 class AllUserApprovalRequest(APIView):
+
+
     def get(self, request):
         approval_requests = ApprovalRequest.objects.all()
         serializer = ApprovalRequestSerializer(approval_requests, many=True)
         return Response(serializer.data)
 
+    status_choices = (
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+        ('Pending', 'Pending'),
+    )
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('id', openapi.IN_QUERY, description="ID",
+                              type=openapi.TYPE_ARRAY, items=openapi.Items(type="integer")),
+            openapi.Parameter('status', openapi.IN_QUERY, description="Status",
+                              type=openapi.TYPE_STRING, enum=list(status_choices)),
+            openapi.Parameter('iin', openapi.IN_QUERY, description="Employee's ID",
+                              type=openapi.TYPE_INTEGER),
+        ],
+        responses={200: 'Data received successfully', 400: 'Bad Request'},
+    )
     def post(self, request):
         serializer = ApprovalRequestSerializer(data=request.data)
         if serializer.is_valid():
@@ -247,6 +308,23 @@ class ApprovalRequestDetail(APIView):
         serializer = ApprovalRequestSerializer(approval_request)
         return Response(serializer.data)
 
+    status_choices = (
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+        ('Pending', 'Pending'),
+    )
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('id', openapi.IN_QUERY, description="ID",
+                              type=openapi.TYPE_ARRAY, items=openapi.Items(type="integer")),
+            openapi.Parameter('status', openapi.IN_QUERY, description="Status",
+                              type=openapi.TYPE_STRING, enum=list(status_choices)),
+            openapi.Parameter('iin', openapi.IN_QUERY, description="Employee's ID",
+                              type=openapi.TYPE_INTEGER),
+        ],
+        responses={200: 'Data received successfully', 400: 'Bad Request'},
+    )
     def put(self, request, pk):
         try:
             approval_request = ApprovalRequest.objects.get(pk=pk)
@@ -259,6 +337,7 @@ class ApprovalRequestDetail(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
     def delete(self, request, pk):
         try:
             approval_request = ApprovalRequest.objects.get(pk=pk)
@@ -268,3 +347,76 @@ class ApprovalRequestDetail(APIView):
         approval_request.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+class ResumeList(APIView):
+    def get(self, request):
+        resumes = Resume.objects.all()
+        serializer = ResumeSerializer(resumes, many=True)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('name', openapi.IN_QUERY, description="Name", type=openapi.TYPE_STRING),
+            openapi.Parameter('iin', openapi.IN_QUERY, description="Employee's ID", type=openapi.TYPE_STRING),
+            openapi.Parameter('department', openapi.IN_QUERY, description="Department", type=openapi.TYPE_STRING),
+            openapi.Parameter('location', openapi.IN_QUERY, description="Location", type=openapi.TYPE_STRING),
+        ],
+        responses={200: 'Data received successfully', 400: 'Bad Request'},
+    )
+    def post(self, request):
+        serializer = ResumeSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ResumeDetail(APIView):
+    def get(self, request, pk):
+        try:
+            resume = Resume.objects.get(pk=pk)
+        except Resume.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ResumeSerializer(resume)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('name', openapi.IN_QUERY, description="Name", type=openapi.TYPE_STRING),
+            openapi.Parameter('iin', openapi.IN_QUERY, description="Employee's ID", type=openapi.TYPE_STRING),
+            openapi.Parameter('department', openapi.IN_QUERY, description="Department", type=openapi.TYPE_STRING),
+            openapi.Parameter('location', openapi.IN_QUERY, description="Location", type=openapi.TYPE_STRING),
+        ],
+        responses={200: 'Data received successfully', 400: 'Bad Request'},
+    )
+    def put(self, request, pk):
+        try:
+            resume = Resume.objects.get(pk=pk)
+        except Resume.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ResumeSerializer(resume, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        try:
+            resume = Resume.objects.get(pk=pk)
+        except Resume.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        resume.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class ResumePDF(APIView):
+    def get(self, request, pk):
+        resume = get_object_or_404(Resume, pk=pk)
+        pdf_file = resume.pdf_file
+        if pdf_file:
+            response = FileResponse(pdf_file.open(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{pdf_file.name}"'
+            return response
+        else:
+            return Response("PDF file not found", status=status.HTTP_404_NOT_FOUND)

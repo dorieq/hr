@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Exam, Question, Answers, Department, Employee, Policy, Application, Location, ApprovalRequest
+from .models import Exam, Question, Answers, Department, Employee, Policy, Application, Location, ApprovalRequest, \
+    Resume
 
 
 class ExamSerializer(serializers.ModelSerializer):
@@ -92,7 +93,17 @@ class LocationSerializer(serializers.ModelSerializer):
         fields = ['name']
 
 class ApprovalRequestSerializer(serializers.ModelSerializer):
+    iin = serializers.PrimaryKeyRelatedField(queryset=Employee.objects.all())
     class Meta:
         model = ApprovalRequest
+        fields = ['id','status','iin']
+
+class ResumeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Resume
         fields = '__all__'
-         
+
+class ResumeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Resume
+        fields = '__all__'

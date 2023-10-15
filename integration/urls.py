@@ -6,6 +6,9 @@ from .views import DepartamentAPIView, LocationAPIView, EmployeeAPIView, Positio
     QuestionCreateView, AnswerCreateView, AddMembersView, AllUserApprovalRequest, ApprovalRequestDetail
 
 urlpatterns = [
+    path('resumes/', views.ResumeList.as_view(), name='resume-list'),
+    path('resumes/<int:pk>/', views.ResumeDetail.as_view(), name='resume-detail'),
+    path('resumes/<int:pk>/pdf/', views.ResumePDF.as_view(), name='resume-pdf'),
     path('approval-requests/', AllUserApprovalRequest.as_view(), name='approval-request-list'),
     path('approval-requests/<int:pk>/', ApprovalRequestDetail.as_view(), name='approval-request-detail'),
     path('exams/', ExamListView.as_view(), name='exam-list'),

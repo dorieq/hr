@@ -165,3 +165,12 @@ class ApprovalRequest(models.Model):
 
     def __str__(self):
         return f"ApprovalRequest {self.id}"
+
+class Resume(models.Model):
+    iin = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='resumes_as_iin')
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
+    name = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='resumes_as_name')
+    pdf_file = models.FileField(upload_to='resumes/')
+
+    def __str__(self):
+        return self.name
