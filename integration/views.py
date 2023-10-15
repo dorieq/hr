@@ -266,37 +266,51 @@ class AddMembersView(FormView, APIView):
         members = form.cleaned_data['members']
         commission.members.add(*members)
         return super().form_valid(form)
+# class AllUserApprovalRequest(APIView):
+#
+#
+#     def get(self, request):
+#         approval_requests = ApprovalRequest.objects.all()
+#         serializer = ApprovalRequestSerializer(approval_requests, many=True)
+#         return Response(serializer.data)
+#
+#     @swagger_auto_schema(
+#         manual_parameters=[
+#             openapi.Parameter('id', openapi.IN_QUERY, description="ID",
+#                               type=openapi.TYPE_INTEGER),
+#             openapi.Parameter('status', openapi.IN_QUERY, description="Status",
+#                               type=openapi.TYPE_STRING),
+#             openapi.Parameter('iin', openapi.IN_QUERY, description="Employee's ID",
+#                               type=openapi.TYPE_STRING),
+#         ],
+#         responses={200: 'Data received successfully', 400: 'Bad Request'},
+#     )
+#     def post(self, request):
+#         serializer = ApprovalRequestSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class AllUserApprovalRequest(APIView):
 
-
-    def get(self, request):
-        approval_requests = ApprovalRequest.objects.all()
-        serializer = ApprovalRequestSerializer(approval_requests, many=True)
-        return Response(serializer.data)
-
-    status_choices = (
-        ('Approved', 'Approved'),
-        ('Rejected', 'Rejected'),
-        ('Pending', 'Pending'),
-    )
-
     @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter('id', openapi.IN_QUERY, description="ID",
-                              type=openapi.TYPE_INTEGER),
-            openapi.Parameter('status', openapi.IN_QUERY, description="Status",
-                              type=openapi.TYPE_STRING, enum=list(status_choices)),
-            openapi.Parameter('iin', openapi.IN_QUERY, description="Employee's ID",
-                              type=openapi.TYPE_STRING),
-        ],
+        request_body=ApprovalRequestSerializer,  # Указываем схему запроса
         responses={200: 'Data received successfully', 400: 'Bad Request'},
     )
     def post(self, request):
-        serializer = ApprovalRequestSerializer(data=request.data)
+        # Добавьте значения для status и iin из запроса
+        data = request.data
+        data['status'] = 'Approved'  # Задайте значение status, например, "Approved"
+        data['iin'] = 1  # Задайте значение iin, например, ID существующего Employee
+
+        serializer = ApprovalRequestSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 class ApprovalRequestDetail(APIView):
     def get(self, request, pk):
