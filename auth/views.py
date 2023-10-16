@@ -9,15 +9,26 @@ from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
-
 @api_view(['POST'])
 def register_page(request):
     itin = request.data.get('itin')
     password = request.data.get('password')
     email = request.data.get('email')
+    role = request.data.get('role', 'user')  # Get the role from the request data or use 'user' as the default
+    firstname = request.data.get('firstname')
+    lastname = request.data.get('lastname')
+    phone = request.data.get('phone')
+    position = request.data.get('position')
 
     try:
         user = User.objects.create_user(username=itin, password=password, email=email)
+        user.role = role  # Set the role for the user
+        user.first_name = firstname
+        user.last_name = lastname
+        user.phone = phone
+        user.position = position
+        user.save()
+
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
@@ -28,7 +39,6 @@ def register_page(request):
         }, status=status.HTTP_201_CREATED)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
 
 @api_view(['GET', 'POST'])
 def custom_login_page(request):
@@ -71,16 +81,13 @@ def custom_logout_page(request):
 @api_view(['GET'])
 def get_user_by_itin(request, itin):
     try:
-        user = User.objects.get(username=itin)
-        return Response({
-            'username': user.username,
-            'email': user.email,
-        }, status=status.HTTP_200_OK)
+        users_list = [{'username': user.username, 'email': user.email, 'role': user.role, 'firstname': user.first_name, 'lastname': user.last_name, 'phone': user.phone, 'position': user.position} for user in users]
+        return Response(users_list, status=status.HTTP_200_OK)
     except User.DoesNotExist:
         return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
 @api_view(['GET'])
 def get_all_users(request):
     users = User.objects.all()
-    users_list = [{'username': user.username, 'email': user.email} for user in users]
+    users_list = [{'username': user.username, 'email': user.email, 'role': user.role, 'firstname': user.first_name, 'lastname': user.last_name, 'phone': user.phone, 'position': user.position} for user in users]
     return Response(users_list, status=status.HTTP_200_OK)
