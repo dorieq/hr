@@ -28,7 +28,7 @@ def register_page(request):
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['POST'])
+@api_view(['POST','GET'])
 def custom_login_page(request):
     itin = request.data.get('itin')
     password = request.data.get('password')
