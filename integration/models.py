@@ -63,16 +63,6 @@ class Location(models.Model):
         verbose_name = 'Локация'
         verbose_name_plural = 'Локации'
 
-class ExpertCommission(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    members = models.ForeignKey(User, related_name='expert_commissions', blank=True, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = 'Экспертная Комиссия'
-        verbose_name_plural = 'Экспертная Комиссия'
 
 
 
@@ -112,8 +102,9 @@ class StatisticData(models.Model):
     def __str__(self):
         return self.label
 class Employee(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True)  # Allow an empty name
-    iin = models.CharField(max_length=12, blank=True)  # Allow an empty iin
+    itin = models.IntegerField(max_length=12, blank=True)  # Allow an empty iin
     Position = models.ForeignKey('Position', on_delete=models.SET_NULL, null=True, blank=True)  # Allow an empty Position
 
     def __str__(self):
@@ -162,7 +153,7 @@ class ApprovalRequest(models.Model):
 
     id = models.AutoField(primary_key=True)
     status = models.CharField(max_length=10, null=True, blank=True)
-    iin = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
+    itin = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return f"ApprovalRequest {self.id}"
@@ -175,3 +166,14 @@ class Resume(models.Model):
 
     def __str__(self):
         return self.name
+
+class ExpertCommission(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    members = models.ForeignKey(Employee, related_name='expert_commissions', blank=True, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Экспертная Комиссия'
+        verbose_name_plural = 'Экспертная Комиссия'

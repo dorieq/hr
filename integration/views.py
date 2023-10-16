@@ -79,7 +79,7 @@ class EmployeeAPIView(APIView):
         rec = request.data.get('employees', [])
         for dep in rec:
             pos = Position.objects.filter(position=dep["position"]).first()
-            emp = Employee(name = dep["name"], iin = dep["iin"], Position = pos)
+            emp = Employee(name = dep["name"], itin = dep["itin"], Position = pos)
             emp.save()
         return Response({'message': 'Array received successfully'}, status=status.HTTP_200_OK)
     
@@ -266,6 +266,7 @@ class AddMembersView(FormView, APIView):
         members = form.cleaned_data['members']
         commission.members.add(*members)
         return super().form_valid(form)
+
 # class AllUserApprovalRequest(APIView):
 #
 #
@@ -280,7 +281,7 @@ class AddMembersView(FormView, APIView):
 #                               type=openapi.TYPE_INTEGER),
 #             openapi.Parameter('status', openapi.IN_QUERY, description="Status",
 #                               type=openapi.TYPE_STRING),
-#             openapi.Parameter('iin', openapi.IN_QUERY, description="Employee's ID",
+#             openapi.Parameter('itin', openapi.IN_QUERY, description="Employee's ID",
 #                               type=openapi.TYPE_STRING),
 #         ],
 #         responses={200: 'Data received successfully', 400: 'Bad Request'},
@@ -295,22 +296,29 @@ class AddMembersView(FormView, APIView):
 class AllUserApprovalRequest(APIView):
 
     @swagger_auto_schema(
-        request_body=ApprovalRequestSerializer,  # Указываем схему запроса
+        request_body=ApprovalRequestSerializer,  # Specify the request body schema
         responses={200: 'Data received successfully', 400: 'Bad Request'},
     )
     def post(self, request):
-        # Добавьте значения для status и iin из запроса
         data = request.data
-        data['status'] = 'Approved'  # Задайте значение status, например, "Approved"
-        data['iin'] = 1  # Задайте значение iin, например, ID существующего Employee
+
+        status_value = data.get('status')
+        itin_value = data.get('itin')
+
+        try:
+            employee = Employee.objects.get(itin=itin_value)  # Используйте itin для поиска Employee
+        except Employee.DoesNotExist:
+            return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        data['status'] = status_value
+        data['itin'] = employee.id
 
         serializer = ApprovalRequestSerializer(data=data)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 
 class ApprovalRequestDetail(APIView):
     def get(self, request, pk):
@@ -334,8 +342,8 @@ class ApprovalRequestDetail(APIView):
                               type=openapi.TYPE_INTEGER),
             openapi.Parameter('status', openapi.IN_QUERY, description="Status",
                               type=openapi.TYPE_STRING, enum=list(status_choices)),
-            openapi.Parameter('iin', openapi.IN_QUERY, description="Employee's ID",
-                              type=openapi.TYPE_STRING),
+            openapi.Parameter('itin', openapi.IN_QUERY, description="Employee's ID",
+                              type=openapi.TYPE_INTEGER),
         ],
         responses={200: 'Data received successfully', 400: 'Bad Request'},
     )
@@ -371,7 +379,7 @@ class ResumeList(APIView):
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter('name', openapi.IN_QUERY, description="Name", type=openapi.TYPE_STRING),
-            openapi.Parameter('iin', openapi.IN_QUERY, description="Employee's ID", type=openapi.TYPE_STRING),
+            openapi.Parameter('itin', openapi.IN_QUERY, description="Employee's ID", type=openapi.TYPE_STRING),
             openapi.Parameter('department', openapi.IN_QUERY, description="Department", type=openapi.TYPE_STRING),
             openapi.Parameter('location', openapi.IN_QUERY, description="Location", type=openapi.TYPE_STRING),
         ],
@@ -397,7 +405,7 @@ class ResumeDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter('name', openapi.IN_QUERY, description="Name", type=openapi.TYPE_STRING),
-            openapi.Parameter('iin', openapi.IN_QUERY, description="Employee's ID", type=openapi.TYPE_STRING),
+            openapi.Parameter('itin', openapi.IN_QUERY, description="Employee's ID", type=openapi.TYPE_STRING),
             openapi.Parameter('department', openapi.IN_QUERY, description="Department", type=openapi.TYPE_STRING),
             openapi.Parameter('location', openapi.IN_QUERY, description="Location", type=openapi.TYPE_STRING),
         ],

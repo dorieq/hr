@@ -94,7 +94,7 @@ class LocationSerializer(serializers.ModelSerializer):
 class ApprovalRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = ApprovalRequest
-        fields = ['id','iin','status']
+        fields = ['id','status','itin']
 
 
 class ResumeSerializer(serializers.ModelSerializer):
