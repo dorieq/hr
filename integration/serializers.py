@@ -92,6 +92,7 @@ class LocationSerializer(serializers.ModelSerializer):
         model = Location
         fields = ['name']
 class ApprovalRequestSerializer(serializers.ModelSerializer):
+    status = serializers.ChoiceField(choices=ApprovalRequest.status_choices)
     class Meta:
         model = ApprovalRequest
         fields = ['id','status','itin']

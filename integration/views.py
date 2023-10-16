@@ -6,7 +6,7 @@ from drf_yasg import openapi
 from django.contrib.auth.models import User
 from rest_framework import generics
 from django import forms
-from .models import ApprovalRequest, Resume
+from .models import ApprovalRequest, Resume, Question
 from .serializers import ApprovalRequestSerializer, ResumeSerializer
 from .serializers import ExamSerializer, AnswersSerializer, QuestionSerializer, DepartmentSerializer, \
     EmployeeSerializer, PolicySerializer, ApplicationSerializer, LocationSerializer
@@ -137,36 +137,91 @@ class AnswerCreateView(generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
+class AddExamView(generics.CreateAPIView):
+    serializer_class = ExamSerializer
 
-class AddExamView(APIView):
-    def post(self, request):
-        serializer = ExamSerializer(data=request.data)
-
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'title': openapi.Schema(type=openapi.TYPE_STRING, description='Title of the exam'),
+                'instruction': openapi.Schema(type=openapi.TYPE_STRING, description='Instructions for the exam'),
+                'duration': openapi.Schema(type=openapi.TYPE_INTEGER, description='Duration of the exam'),
+                'access': openapi.Schema(type=openapi.TYPE_STRING, description='Access level for the exam'),
+            }
+        ),
+        responses={201: 'Exam saved successfully', 400: 'Action Failed. Exam could not be saved'},
+    )
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             exam = serializer.save()
             return Response(
-                {"isSuccessful": True, "message": "Exam saved successfully", "exam": ExamSerializer(exam).data})
+                {"isSuccessful": True, "message": "Exam saved successfully", "exam": ExamSerializer(exam).data},
+                status=status.HTTP_201_CREATED)
         else:
             return Response({"isSuccessful": False, "message": "Action Failed. Exam could not be saved",
-                             "errors": serializer.errors})
+                             "errors": serializer.errors},
+                             status=status.HTTP_400_BAD_REQUEST)
 
+class AddQuestionView(generics.CreateAPIView):
+    serializer_class = QuestionSerializer
 
-class AddQuestionView(APIView):
-    def post(self, request):
-        serializer = QuestionSerializer(data=request.data)
-
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'title': openapi.Schema(type=openapi.TYPE_STRING, description='Title of the question'),
+                'content': openapi.Schema(type=openapi.TYPE_STRING, description='Content of the question'),
+                # Add other fields from your QuestionSerializer here
+            }
+        ),
+        responses={201: 'Question saved successfully', 400: 'Action Failed. Question could not be saved'},
+    )
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             question = serializer.save()
-            return Response({"isSuccessful": True, "message": "Question saved successfully",
-                             "question": QuestionSerializer(question).data})
+            return Response(
+                {"isSuccessful": True, "message": "Question saved successfully", "question": QuestionSerializer(question).data},
+                status=status.HTTP_201_CREATED)
         else:
             return Response({"isSuccessful": False, "message": "Action Failed. Question could not be saved",
-                             "errors": serializer.errors})
+                             "errors": serializer.errors},
+                             status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class AddAnswersView(APIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'question_id': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description='ID вопроса, к которому относится этот ответ.'
+                ),
+                'answer': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description='Содержание ответа.'
+                ),
+                # Добавьте другие поля из вашего сериализатора ответов здесь
+            }
+        ),
+        responses={200: 'Ответ успешно создан', 400: 'Неверный запрос'},
+    )
     def post(self, request):
-        serializer = AnswersSerializer(data=request.data)
+        data = request.data
+        questionId = data.get('questionId')
+
+        try:
+            question = Question.objects.get(id=questionId)  # Corrected here
+        except Question.DoesNotExist:  # Corrected here
+            return Response({'error': 'Вопрос не найден'}, status=status.HTTP_404_NOT_FOUND)
+
+        data['questionId'] = question.id
+
+        serializer = AnswersSerializer(data=data)
 
         if serializer.is_valid():
             answer = serializer.save()
@@ -176,8 +231,18 @@ class AddAnswersView(APIView):
             return Response({"isSuccessful": False, "message": "Action Failed. Answer could not be saved",
                              "errors": serializer.errors})
 
-
 class AddApplicationView(APIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'status': openapi.Schema(type=openapi.TYPE_STRING, description='status for field1'),
+                'current_location': openapi.Schema(type=openapi.TYPE_INTEGER, description='current_location for field2'),
+                # Add other fields from your ApplicationSerializer here
+            }
+        ),
+        responses={200: 'Application saved successfully', 400: 'Action Failed. Application could not be saved'},
+    )
     def post(self, request):
         serializer = ApplicationSerializer(data=request.data)
 
@@ -189,6 +254,9 @@ class AddApplicationView(APIView):
             return Response({"isSuccessful": False, "message": "Action Failed. Application could not be saved",
                              "errors": serializer.errors})
 
+    @swagger_auto_schema(
+        responses={200: openapi.Response('Successful Response', LocationSerializer)},
+    )
     def get(self, request):
         locations = Location.objects.all()
         serializer = LocationSerializer(locations, many=True)
@@ -199,7 +267,7 @@ class PolicyView(APIView):
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter('file', openapi.IN_QUERY, description="Policy File",
-                              type=openapi.TYPE_STRING),
+                              type=openapi.TYPE_FILE),
         ],
         responses={200: 'Policy data received successfully', 400: 'Bad Request'},
     )
@@ -294,19 +362,33 @@ class AddMembersView(FormView, APIView):
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class AllUserApprovalRequest(APIView):
+    status_choices = (
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+        ('Pending', 'Pending'),
+    )
 
     @swagger_auto_schema(
-        request_body=ApprovalRequestSerializer,  # Specify the request body schema
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'status': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    enum=[choice[0] for choice in status_choices],
+                ),
+                'itin': openapi.Schema(type=openapi.TYPE_STRING),
+                # Add other fields from your ApprovalRequestSerializer here
+            }
+        ),
         responses={200: 'Data received successfully', 400: 'Bad Request'},
     )
     def post(self, request):
         data = request.data
-
         status_value = data.get('status')
         itin_value = data.get('itin')
 
         try:
-            employee = Employee.objects.get(itin=itin_value)  # Используйте itin для поиска Employee
+            employee = Employee.objects.get(itin=itin_value)  # Use itin to find the Employee
         except Employee.DoesNotExist:
             return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -321,6 +403,12 @@ class AllUserApprovalRequest(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ApprovalRequestDetail(APIView):
+    status_choices = (
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+        ('Pending', 'Pending'),
+    )
+
     def get(self, request, pk):
         try:
             approval_request = ApprovalRequest.objects.get(pk=pk)
@@ -330,21 +418,18 @@ class ApprovalRequestDetail(APIView):
         serializer = ApprovalRequestSerializer(approval_request)
         return Response(serializer.data)
 
-    status_choices = (
-        ('Approved', 'Approved'),
-        ('Rejected', 'Rejected'),
-        ('Pending', 'Pending'),
-    )
-
     @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter('id', openapi.IN_QUERY, description="ID",
-                              type=openapi.TYPE_INTEGER),
-            openapi.Parameter('status', openapi.IN_QUERY, description="Status",
-                              type=openapi.TYPE_STRING, enum=list(status_choices)),
-            openapi.Parameter('itin', openapi.IN_QUERY, description="Employee's ID",
-                              type=openapi.TYPE_INTEGER),
-        ],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'status': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    enum=[choice[0] for choice in status_choices],
+                ),
+                'itin': openapi.Schema(type=openapi.TYPE_STRING),
+                # Add other fields from your ApprovalRequestSerializer here
+            }
+        ),
         responses={200: 'Data received successfully', 400: 'Bad Request'},
     )
     def put(self, request, pk):
@@ -353,12 +438,24 @@ class ApprovalRequestDetail(APIView):
         except ApprovalRequest.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        serializer = ApprovalRequestSerializer(approval_request, data=request.data)
+        data = request.data
+        status_value = data.get('status')
+        itin_value = data.get('itin')
+
+        try:
+            employee = Employee.objects.get(itin=itin_value)  # Use itin to find the Employee
+        except Employee.DoesNotExist:
+            return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        data['status'] = status_value
+        data['itin'] = employee.id
+
+        serializer = ApprovalRequestSerializer(approval_request, data=data)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
     def delete(self, request, pk):
         try:
@@ -368,22 +465,20 @@ class ApprovalRequestDetail(APIView):
 
         approval_request.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 class ResumeList(APIView):
+    @swagger_auto_schema(
+        operation_description="GET all Resumes",
+        responses={200: ResumeSerializer(many=True)}
+    )
     def get(self, request):
         resumes = Resume.objects.all()
         serializer = ResumeSerializer(resumes, many=True)
         return Response(serializer.data)
 
     @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter('name', openapi.IN_QUERY, description="Name", type=openapi.TYPE_STRING),
-            openapi.Parameter('itin', openapi.IN_QUERY, description="Employee's ID", type=openapi.TYPE_STRING),
-            openapi.Parameter('department', openapi.IN_QUERY, description="Department", type=openapi.TYPE_STRING),
-            openapi.Parameter('location', openapi.IN_QUERY, description="Location", type=openapi.TYPE_STRING),
-        ],
-        responses={200: 'Data received successfully', 400: 'Bad Request'},
+        operation_description="POST a new Resume",
+        request_body=ResumeSerializer,
+        responses={201: ResumeSerializer, 400: 'Bad Request'}
     )
     def post(self, request):
         serializer = ResumeSerializer(data=request.data)
@@ -392,7 +487,12 @@ class ResumeList(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class ResumeDetail(APIView):
+    @swagger_auto_schema(
+        operation_description="GET a specific Resume",
+        responses={200: ResumeSerializer, 404: 'Not Found'}
+    )
     def get(self, request, pk):
         try:
             resume = Resume.objects.get(pk=pk)
@@ -403,13 +503,9 @@ class ResumeDetail(APIView):
         return Response(serializer.data)
 
     @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter('name', openapi.IN_QUERY, description="Name", type=openapi.TYPE_STRING),
-            openapi.Parameter('itin', openapi.IN_QUERY, description="Employee's ID", type=openapi.TYPE_STRING),
-            openapi.Parameter('department', openapi.IN_QUERY, description="Department", type=openapi.TYPE_STRING),
-            openapi.Parameter('location', openapi.IN_QUERY, description="Location", type=openapi.TYPE_STRING),
-        ],
-        responses={200: 'Data received successfully', 400: 'Bad Request'},
+        operation_description="PUT a specific Resume",
+        request_body=ResumeSerializer,
+        responses={200: ResumeSerializer, 400: 'Bad Request', 404: 'Not Found'}
     )
     def put(self, request, pk):
         try:
@@ -423,6 +519,10 @@ class ResumeDetail(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(
+        operation_description="DELETE a specific Resume",
+        responses={204: 'No Content', 404: 'Not Found'}
+    )
     def delete(self, request, pk):
         try:
             resume = Resume.objects.get(pk=pk)
@@ -432,7 +532,12 @@ class ResumeDetail(APIView):
         resume.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 class ResumePDF(APIView):
+    @swagger_auto_schema(
+        operation_description="GET the PDF of a specific Resume",
+        responses={200: openapi.Response(description='PDF File'), 404: 'Not Found'}
+    )
     def get(self, request, pk):
         resume = get_object_or_404(Resume, pk=pk)
         pdf_file = resume.pdf_file
