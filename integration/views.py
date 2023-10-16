@@ -6,7 +6,7 @@ from drf_yasg import openapi
 from django.contrib.auth.models import User
 from rest_framework import generics
 from django import forms
-from .models import ApprovalRequest, Resume, Question
+from .models import ApprovalRequest, Question
 from .serializers import ApprovalRequestSerializer, ResumeSerializer
 from .serializers import ExamSerializer, AnswersSerializer, QuestionSerializer, DepartmentSerializer, \
     EmployeeSerializer, PolicySerializer, ApplicationSerializer, LocationSerializer

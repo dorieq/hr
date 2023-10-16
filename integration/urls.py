@@ -1,3 +1,4 @@
+from django.shortcuts import redirect
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
@@ -6,6 +7,7 @@ from .views import DepartamentAPIView, LocationAPIView, EmployeeAPIView, Positio
     QuestionCreateView, AnswerCreateView, AddMembersView, AllUserApprovalRequest, ApprovalRequestDetail
 
 urlpatterns = [
+
     path('resumes/', views.ResumeList.as_view(), name='resume-list'),
     path('resumes/<int:pk>/', views.ResumeDetail.as_view(), name='resume-detail'),
     path('resumes/<int:pk>/pdf/', views.ResumePDF.as_view(), name='resume-pdf'),
@@ -26,3 +28,5 @@ urlpatterns = [
     path('employees/', EmployeeAPIView.as_view(), name='employees'),
     path('positions/', PositionAPIView.as_view(), name='positions'),
 ]
+
+

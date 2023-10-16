@@ -103,7 +103,3 @@ class ResumeSerializer(serializers.ModelSerializer):
         model = Resume
         fields = '__all__'
 
-class ResumeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Resume
-        fields = '__all__'

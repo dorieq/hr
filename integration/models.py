@@ -152,7 +152,6 @@ class ApprovalRequest(models.Model):
         ('Pending', 'Pending'),
     )
 
-    id = models.AutoField(primary_key=True)
     status = models.CharField(max_length=10, null=True, blank=True)
     itin = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
 
@@ -160,10 +159,9 @@ class ApprovalRequest(models.Model):
         return f"ApprovalRequest {self.id}"
 
 class Resume(models.Model):
+    position = models.ForeignKey(Position, on_delete=models.SET_NULL, null=True, blank=True)
     name = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='resumes_as_name')
-    position = models.ForeignKey(Position, on_delete=models.CASCADE, related_name='resumes_as_position')
-    numbers = models.IntegerField()
-    email = models.EmailField()
+    email = models.EmailField(default='default@email.com')
     iin = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='resumes_as_iin', blank=True)
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
     pdf_file = models.FileField(upload_to='resumes/')
