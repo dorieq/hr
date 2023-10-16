@@ -28,26 +28,32 @@ def register_page(request):
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['POST'])
+
+@api_view(['GET', 'POST'])
 def custom_login_page(request):
-    itin = request.data.get('itin')
-    password = request.data.get('password')
+    if request.method == 'POST':
+        itin = request.data.get('itin')
+        password = request.data.get('password')
 
-    user = authenticate(request, username=itin, password=password)
+        user = authenticate(request, username=itin, password=password)
 
-    if user is not None:
-        login(request, user)
+        if user is not None:
+            login(request, user)
 
-        refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
 
-        return Response({
-            'access_token': access_token,
-            'refresh_token': refresh_token,
-        }, status=status.HTTP_200_OK)
-    else:
-        return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    elif request.method == 'GET':
+        # Handle the GET request here (e.g., return some information)
+        return Response({'message': 'This is a GET request to the login page'}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
