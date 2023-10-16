@@ -220,6 +220,7 @@ class AddAnswersView(APIView):
             return Response({'error': 'Вопрос не найден'}, status=status.HTTP_404_NOT_FOUND)
 
         data['questionId'] = question.id
+        d = 1
 
         serializer = AnswersSerializer(data=data)
 
