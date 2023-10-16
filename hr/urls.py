@@ -25,9 +25,8 @@ urlpatterns = [
     path('api/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('api/redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('', include('integration.urls')),
-    path('api/register/', views.registeruser.as_view(), name='register'),
-    path('api/login/', views.loginuser.as_view(), name='login'),
-    path('api/users/', views.getUsers, name='get-users'),
-    path('user/<str:itin>/', get_user_by_itin, name='get_user_by_itin'),
-    path('users/', get_all_users, name='get_all_users'),
+    path('api/register/', views.registeruser, name='register'),
+    path('api/login/', views.loginuser, name='login'),
+    path('api/users/', views.get_all_users, name='get-users'),
+    path('api/user/<str:itin>/', get_user_by_itin, name='get_user_by_itin'),
 ]

@@ -1,47 +1,47 @@
+from django.contrib.auth.models import User
+from django.http import HttpRequest
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.models import User 
+from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
+
+from .models import UserProfile
+from .serializers import UserRegistrationSerializer  # Импортируйте ваш сериализатор
 
 @api_view(['POST'])
-def register_page(request):
-    itin = request.data.get('itin')
-    password = request.data.get('password')
-    email = request.data.get('email')
-    role = request.data.get('role', 'user')  # Get the role from the request data or use 'user' as the default
-    firstname = request.data.get('firstname')
-    lastname = request.data.get('lastname')
-    phone = request.data.get('phone')
-    position = request.data.get('position')
+def registeruser(request: HttpRequest):
+    serializer = UserRegistrationSerializer(data=request.data)
+    if serializer.is_valid():
+        itin = serializer.validated_data['itin']
+        password = serializer.validated_data['password']
+        email = serializer.validated_data['email']
+        role = serializer.validated_data['role']
+        firstname = serializer.validated_data['firstname']
+        lastname = serializer.validated_data['lastname']
+        phone = serializer.validated_data['phone']
+        position = serializer.validated_data['position']
 
-    try:
-        user = User.objects.create_user(username=itin, password=password, email=email)
-        user.role = role  # Set the role for the user
-        user.first_name = firstname
-        user.last_name = lastname
-        user.phone = phone
-        user.position = position
-        user.save()
+        try:
+            user = User.objects.create_user(username=itin, password=password, email=email)
+            user_profile = UserProfile(user=user, role=role, phone=phone, position=position)
+            user_profile.save()
 
-        refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
 
-        return Response({
-            'access_token': access_token,
-            'refresh_token': refresh_token,
-        }, status=status.HTTP_201_CREATED)
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 @api_view(['GET', 'POST'])
-def custom_login_page(request):
+def loginuser(request):
     if request.method == 'POST':
         itin = request.data.get('itin')
         password = request.data.get('password')
@@ -67,7 +67,6 @@ def custom_login_page(request):
         return Response({'message': 'This is a GET request to the login page'}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
 def custom_logout_page(request):
     try:
         refresh_token = request.data.get('refresh_token')
@@ -78,16 +77,33 @@ def custom_logout_page(request):
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+
 @api_view(['GET'])
 def get_user_by_itin(request, itin):
     try:
-        users_list = [{'username': user.username, 'email': user.email, 'role': user.role, 'firstname': user.first_name, 'lastname': user.last_name, 'phone': user.phone, 'position': user.position} for user in users]
-        return Response(users_list, status=status.HTTP_200_OK)
-    except User.DoesNotExist:
+        user_profile = UserProfile.objects.get(user__username=itin)
+        user_data = {
+            'itin': user_profile.user.username,
+            'email': user_profile.user.email,
+            'role': user_profile.role,
+            'firstname': user_profile.user.first_name,
+            'lastname': user_profile.user.last_name,
+            'phone': user_profile.phone,
+            'position': user_profile.position,
+        }
+        return Response(user_data, status=status.HTTP_200_OK)
+    except UserProfile.DoesNotExist:
         return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
-
 @api_view(['GET'])
 def get_all_users(request):
-    users = User.objects.all()
-    users_list = [{'username': user.username, 'email': user.email, 'role': user.role, 'firstname': user.first_name, 'lastname': user.last_name, 'phone': user.phone, 'position': user.position} for user in users]
+    users = UserProfile.objects.all()
+    users_list = [{
+        'itin': user.user.username,
+        'email': user.user.email,
+        'role': user.role,
+        'firstname': user.user.first_name,
+        'lastname': user.user.last_name,
+        'phone': user.phone,
+        'position': user.position,
+    } for user in users]
     return Response(users_list, status=status.HTTP_200_OK)
