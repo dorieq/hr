@@ -14,9 +14,10 @@ from drf_yasg import openapi
 def register_page(request):
     itin = request.data.get('itin')
     password = request.data.get('password')
+    email = request.data.get('email')
 
     try:
-        user = User.objects.create_user(username=itin, password=password)
+        user = User.objects.create_user(username=itin, password=password, email=email)
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
@@ -66,3 +67,20 @@ def custom_logout_page(request):
         return Response({'detail': 'Successfully logged out'}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def get_user_by_itin(request, itin):
+    try:
+        user = User.objects.get(username=itin)
+        return Response({
+            'username': user.username,
+            'email': user.email,
+        }, status=status.HTTP_200_OK)
+    except User.DoesNotExist:
+        return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+def get_all_users(request):
+    users = User.objects.all()
+    users_list = [{'username': user.username, 'email': user.email} for user in users]
+    return Response(users_list, status=status.HTTP_200_OK)
