@@ -11,5 +11,17 @@ class UserRegistrationSerializer(serializers.Serializer):
     position = serializers.CharField()
 
 
-class PositionSerializer:
-    pass
+class PositionSerializer(serializers.Serializer):
+    # Define the fields for the Position serializer
+    name = serializers.CharField()
+    description = serializers.CharField()
+
+class LocationSerializer(serializers.Serializer):
+    # Define the fields for the Location serializer
+    name = serializers.CharField()
+    address = serializers.CharField()
+
+class DepartmentSerializer(serializers.Serializer):
+    # Define the fields for the Department serializer
+    name = serializers.CharField()
+    description = serializers.CharField()
