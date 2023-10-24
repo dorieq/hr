@@ -10,3 +10,6 @@ class UserRegistrationSerializer(serializers.Serializer):
     phone = serializers.CharField()
     position = serializers.CharField()
 
+
+class PositionSerializer:
+    pass

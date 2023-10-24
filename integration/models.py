@@ -106,8 +106,8 @@ class Employee(models.Model):
     name = models.CharField(max_length=255, blank=True)  # Allow an empty name
     itin = models.IntegerField(blank=True)  # Allow an empty iin
     email = models.EmailField(max_length=40, blank=True)
-    Position = models.ForeignKey('Position', on_delete=models.SET_NULL, null=True, blank=True)  # Allow an empty Position
-
+    Position = models.ForeignKey(Position, on_delete=models.SET_NULL, null=True, related_name='integration_employee') # Allow an empty Position
+    
     def __str__(self):
         return self.name
 

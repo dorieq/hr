@@ -7,7 +7,10 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 
-from .models import UserProfile
+from .serializers import PositionSerializer
+
+
+from .models import UserProfile,Position,Department,Location
 from .serializers import UserRegistrationSerializer  # Импортируйте ваш сериализатор
 
 @api_view(['POST'])
@@ -84,6 +87,7 @@ def get_user_by_itin(request, itin):
         user_profile = UserProfile.objects.get(user__username=itin)
         user_data = {
             'itin': user_profile.user.username,
+            'password': user_profile.user.password,
             'email': user_profile.user.email,
             'role': user_profile.role,
             'firstname': user_profile.user.first_name,
@@ -107,3 +111,72 @@ def get_all_users(request):
         'position': user.position,
     } for user in users]
     return Response(users_list, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def get_all_positions(request):
+    positions = Position.objects.all()
+    position_list = [{
+        'id': position.id,
+        'name': position.name,
+        # Add other fields as needed
+    } for position in positions]
+    return Response(position_list, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def get_all_locations(request):
+    locations = Location.objects.all()
+    location_list = [{
+        'id': location.id,
+        'name': location.name,
+        # Add other fields as needed
+    } for location in locations]
+    return Response(location_list, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def get_all_departments(request):
+    departments = Department.objects.all()
+    department_list = [{
+        'id': department.id,
+        'name': department.name,
+        # Add other fields as needed
+    } for department in departments]
+    return Response(department_list, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def get_position_by_id(request, position_id):
+    try:
+        position = Position.objects.get(id=position_id)
+        position_data = {
+            'id': position.id,
+            'name': position.name,
+            # Add other fields as needed
+        }
+        return Response(position_data, status=status.HTTP_200_OK)
+    except Position.DoesNotExist:
+        return Response({'error': 'Position does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+def get_department_by_id(request, department_id):
+    try:
+        department = Department.objects.get(id=department_id)
+        department_data = {
+            'id': department.id,
+            'name': department.name,
+            # Add other fields as needed
+        }
+        return Response(department_data, status=status.HTTP_200_OK)
+    except Department.DoesNotExist:
+        return Response({'error': 'Department does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['GET'])
+def get_location_by_id(request, location_id):
+    try:
+        location = Location.objects.get(id=location_id)
+        location_data = {
+            'id': location.id,
+            'name': location.name,
+            # Add other fields as needed
+        }
+        return Response(location_data, status=status.HTTP_200_OK)
+    except Location.DoesNotExist:
+        return Response({'error': 'Location does not exist'}, status=status.HTTP_404_NOT_FOUND)
