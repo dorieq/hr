@@ -78,7 +78,7 @@ class Department(models.Model):
 
 class Position(models.Model):
 
-    position = models.CharField(
+    name = models.CharField(
         max_length=20
     )
 
