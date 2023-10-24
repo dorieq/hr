@@ -63,7 +63,7 @@ class PositionAPIView(APIView):
         for cur in rec:
             loc = Location.objects.filter(name=cur["location"]).first()
             dep = Department.objects.filter(name=cur["department"]).first()
-            pos = Position(position=cur["name"], Department=dep, Location=loc)
+            pos = Position(name=cur["name"], Department=dep, Location=loc)
             pos.save()
         return Response({'message': 'Array received successfully'}, status=status.HTTP_200_OK)
     
