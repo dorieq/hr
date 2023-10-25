@@ -35,12 +35,33 @@ def registeruser(request: HttpRequest):
             access_token = str(refresh.access_token)
             refresh_token = str(refresh)
 
+<<<<<<< HEAD
             return Response({
                 'access_token': access_token,
                 'refresh_token': refresh_token,
             }, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+=======
+@api_view(['POST','GET'])
+def custom_login_page(request):
+    itin = request.data.get('itin')
+    password = request.data.get('password')
+
+    user = authenticate(request, username=itin, password=password)
+
+    if user is not None:
+        login(request, user)
+
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+
+        return Response({
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+        }, status=status.HTTP_200_OK)
+>>>>>>> c78f97ecd1a25229cefa73bd8e605e23f57e3aae
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 @api_view(['GET', 'POST'])
